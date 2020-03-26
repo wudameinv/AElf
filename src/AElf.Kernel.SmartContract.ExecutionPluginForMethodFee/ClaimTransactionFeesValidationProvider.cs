@@ -69,14 +69,16 @@ namespace AElf.Kernel.SmartContract.ExecutionPluginForMethodFee
             var totalTransactionFeesMapFromProvider =
                 await _totalTransactionFeesMapProvider.GetTotalTransactionFeesMapAsync(new ChainContext
                 {
-                    BlockHash = block.GetHash(),
-                    BlockHeight = block.Header.Height
+                    BlockHash = block.Header.PreviousBlockHash,
+                    BlockHeight = block.Header.Height - 1
                 });
             if (totalTransactionFeesMapFromProvider == null)
             {
                 Logger.LogInformation("totalTransactionFeesMapFromProvider == null");
                 return hashFromState.Value.IsEmpty;
             }
+
+            Logger.LogInformation($"Data from provider: {totalTransactionFeesMapFromProvider}");
 
             var hashFromProvider = Hash.FromMessage(totalTransactionFeesMapFromProvider);
             var result = hashFromProvider.Value.Equals(hashFromState.Value);

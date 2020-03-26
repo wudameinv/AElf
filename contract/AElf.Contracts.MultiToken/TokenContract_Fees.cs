@@ -380,7 +380,7 @@ namespace AElf.Contracts.MultiToken
 
         public override Empty DonateResourceToken(TotalResourceTokensMaps input)
         {
-            Context.LogDebug(() => $"Start donate resource token. {input}");
+            Context.LogDebug(() => $"Donate resource token. {input}");
             State.LatestTotalResourceTokensMapsHash.Value = Hash.FromMessage(input);
             var isMainChain = true;
             if (State.TreasuryContract.Value == null)

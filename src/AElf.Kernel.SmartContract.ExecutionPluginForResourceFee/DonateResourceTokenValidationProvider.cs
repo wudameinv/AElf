@@ -69,8 +69,8 @@ namespace AElf.Kernel.SmartContract.ExecutionPluginForResourceFee
             var totalResourceTokensMapsFromProvider =
                 await _totalResourceTokensMapsProvider.GetTotalResourceTokensMapsAsync(new ChainContext
                 {
-                    BlockHash = block.GetHash(),
-                    BlockHeight = block.Header.Height
+                    BlockHash = block.Header.PreviousBlockHash,
+                    BlockHeight = block.Header.Height - 1
                 });
             if (totalResourceTokensMapsFromProvider == null)
             {
@@ -78,6 +78,8 @@ namespace AElf.Kernel.SmartContract.ExecutionPluginForResourceFee
                 return hashFromState.Value.IsEmpty || hashFromState ==
                        Hash.FromMessage(TotalResourceTokensMaps.Parser.ParseFrom(ByteString.Empty));
             }
+
+            Logger.LogInformation($"Data from provider: {totalResourceTokensMapsFromProvider}");
 
             var hashFromProvider = Hash.FromMessage(totalResourceTokensMapsFromProvider);
             var result = hashFromProvider.Value.Equals(hashFromState.Value);
