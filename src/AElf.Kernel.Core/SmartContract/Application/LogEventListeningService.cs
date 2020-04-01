@@ -78,7 +78,7 @@ namespace AElf.Kernel.SmartContract.Application
                         }
                     }
 
-                    await processor.ProcessAsync(block, logEventsMap.ToDictionary(m => m.Key, m => m.Value));
+                    await processor.ProcessAsync(block, logEventsMap);
                 }
 
                 Logger.LogTrace("Finish apply log event processor.");
