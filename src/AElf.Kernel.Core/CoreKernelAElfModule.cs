@@ -44,8 +44,8 @@ namespace AElf.Kernel
             services.AddSingleton(typeof(ICachedBlockchainExecutedDataService<>),
                 typeof(CachedBlockchainExecutedDataService<>));
             
-            services.AddKeyValueDbContext<BlockchainKeyValueDbContext>(p => p.UseRedisDatabase());
-            services.AddKeyValueDbContext<StateKeyValueDbContext>(p => p.UseRedisDatabase());
+            services.AddKeyValueDbContext<BlockchainKeyValueDbContext>(p => p.UseInMemoryDatabase());
+            services.AddKeyValueDbContext<StateKeyValueDbContext>(p => p.UseInMemoryDatabase());
         }
 
         public override void OnPostApplicationInitialization(ApplicationInitializationContext context)
