@@ -242,9 +242,13 @@ namespace AElf.OS.Network.Application
             {
                 try
                 {
-                    if (peer.KnowsTransaction(txHash)) 
+                    if (peer.KnowsTransaction(txHash))
+                    {
+                        Logger.LogDebug($"Peer: {peer} knows tx: {txHash}.");
                         return Task.CompletedTask; // transaction already known to this peer
-                    
+                    }
+
+                    Logger.LogDebug($"Broadcast tx to Peer: {peer}.");
                     peer.EnqueueTransaction(transaction, async ex =>
                     {
                         if (ex != null)
@@ -260,6 +264,11 @@ namespace AElf.OS.Network.Application
                 {
                     Logger.LogInformation(ex, $"Could not enqueue transaction to {peer} - " +
                                               $"status {peer.ConnectionStatus}.");
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e, $"Broadcast tx to Peer: {peer} failed.");
+                    throw;
                 }
             }
             
