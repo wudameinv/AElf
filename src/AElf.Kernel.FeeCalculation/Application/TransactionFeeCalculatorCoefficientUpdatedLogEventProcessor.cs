@@ -8,6 +8,7 @@ using AElf.Kernel.Token;
 using AElf.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Volo.Abp.Threading;
 
 namespace AElf.Kernel.FeeCalculation.Application
 {
@@ -17,25 +18,7 @@ namespace AElf.Kernel.FeeCalculation.Application
         private readonly ISmartContractAddressService _smartContractAddressService;
         private readonly ICalculateFunctionProvider _calculateFunctionProvider;
 
-        private LogEvent _interestedEvent;
-
         private ILogger<TransactionFeeCalculatorCoefficientUpdatedLogEventProcessor> Logger { get; set; }
-
-        public override LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-
-                var address =
-                    _smartContractAddressService.GetAddressByContractName(TokenSmartContractAddressNameProvider.Name);
-
-                _interestedEvent = new CalculateFeeAlgorithmUpdated().ToLogEvent(address);
-
-                return _interestedEvent;
-            }
-        }
 
         public TransactionFeeCalculatorCoefficientUpdatedLogEventProcessor(
             ISmartContractAddressService smartContractAddressService,
@@ -44,6 +27,28 @@ namespace AElf.Kernel.FeeCalculation.Application
             _smartContractAddressService = smartContractAddressService;
             _calculateFunctionProvider = calculateFunctionProvider;
             Logger = NullLogger<TransactionFeeCalculatorCoefficientUpdatedLogEventProcessor>.Instance;
+        }
+        
+        public override InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (InterestedEvent != null)
+                return InterestedEvent;
+
+            var smartContractAddress = AsyncHelper.RunSync(() => _smartContractAddressService.GetSmartContractAddressAsync(
+                chainContext, TokenSmartContractAddressNameProvider.Name));
+                
+            if (smartContractAddress == null) return null;
+            var logEvent = new CalculateFeeAlgorithmUpdated().ToLogEvent(smartContractAddress.Address);
+            var interestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+            if (!AsyncHelper.RunSync(() => _smartContractAddressService.CheckSmartContractAddressIrreversibleAsync(smartContractAddress)))
+                return interestedEvent;
+            InterestedEvent = interestedEvent;
+
+            return InterestedEvent;
         }
 
         protected override async Task ProcessLogEventAsync(Block block, LogEvent logEvent)

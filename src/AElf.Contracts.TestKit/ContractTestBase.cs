@@ -90,9 +90,6 @@ namespace AElf.Contracts.TestKit
                 throw new Exception($"DeploySystemSmartContract failed: {res.TransactionResult}");
             }
 
-            var address = await zeroStub.GetContractAddressByName.CallAsync(name);
-            ContractAddressService.SetAddress(name, address);
-
             return res.Output;
         }
 

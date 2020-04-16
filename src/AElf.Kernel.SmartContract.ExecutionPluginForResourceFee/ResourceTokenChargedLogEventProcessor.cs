@@ -8,6 +8,7 @@ using AElf.Kernel.Token;
 using AElf.Types;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Volo.Abp.Threading;
 
 namespace AElf.Kernel.SmartContract.ExecutionPluginForResourceFee
 {
@@ -15,24 +16,8 @@ namespace AElf.Kernel.SmartContract.ExecutionPluginForResourceFee
     {
         private readonly ISmartContractAddressService _smartContractAddressService;
         private readonly ITotalResourceTokensMapsProvider _totalTotalResourceTokensMapsProvider;
-        private LogEvent _interestedEvent;
+        private InterestedEvent _interestedEvent;
         private ILogger<ResourceTokenChargedLogEventProcessor> Logger { get; set; }
-
-        public LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-
-                var address =
-                    _smartContractAddressService.GetAddressByContractName(TokenSmartContractAddressNameProvider.Name);
-
-                _interestedEvent = new ResourceTokenCharged().ToLogEvent(address);
-
-                return _interestedEvent;
-            }
-        }
 
         public ResourceTokenChargedLogEventProcessor(ISmartContractAddressService smartContractAddressService,
             ITotalResourceTokensMapsProvider totalTotalResourceTokensMapsProvider)
@@ -40,6 +25,28 @@ namespace AElf.Kernel.SmartContract.ExecutionPluginForResourceFee
             _smartContractAddressService = smartContractAddressService;
             _totalTotalResourceTokensMapsProvider = totalTotalResourceTokensMapsProvider;
             Logger = NullLogger<ResourceTokenChargedLogEventProcessor>.Instance;
+        }
+
+        public InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (_interestedEvent != null)
+                return _interestedEvent;
+
+            var smartContractAddress = AsyncHelper.RunSync(() => _smartContractAddressService.GetSmartContractAddressAsync(
+                chainContext, TokenSmartContractAddressNameProvider.Name));
+
+            if (smartContractAddress == null) return null;
+            var logEvent = new ResourceTokenCharged().ToLogEvent(smartContractAddress.Address);
+            var interestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+            if (!AsyncHelper.RunSync(() => _smartContractAddressService.CheckSmartContractAddressIrreversibleAsync(smartContractAddress)))
+                return interestedEvent;
+            _interestedEvent = interestedEvent;
+
+            return _interestedEvent;
         }
 
         public async Task ProcessAsync(Block block, Dictionary<TransactionResult, List<LogEvent>> logEventsMap)

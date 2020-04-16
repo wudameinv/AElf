@@ -15,30 +15,35 @@ namespace AElf.Kernel.CodeCheck
     {
         private readonly ISmartContractAddressService _smartContractAddressService;
         private readonly ICodeCheckService _codeCheckService;
-        private LogEvent _interestedEvent;
+        private InterestedEvent _interestedEvent;
         private readonly IProposalService _proposalService;
-
-        public LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-
-                var address = _smartContractAddressService.GetZeroSmartContractAddress();
-
-                _interestedEvent = new CodeCheckRequired().ToLogEvent(address);
-
-                return _interestedEvent;
-            }
-        }
-
+        
         public CodeCheckRequiredLogEventProcessor(ISmartContractAddressService smartContractAddressService,
             ICodeCheckService codeCheckService, IProposalService proposalService)
         {
             _smartContractAddressService = smartContractAddressService;
             _codeCheckService = codeCheckService;
             _proposalService = proposalService;
+        }
+
+        public InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (_interestedEvent != null)
+                return _interestedEvent;
+
+            var address = _smartContractAddressService.GetZeroSmartContractAddress();
+
+            if (address == null) return null;
+            
+            var logEvent = new CodeCheckRequired().ToLogEvent(address);
+
+            _interestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+
+            return _interestedEvent;
         }
 
         public Task ProcessAsync(Block block, Dictionary<TransactionResult, List<LogEvent>> logEventsMap)

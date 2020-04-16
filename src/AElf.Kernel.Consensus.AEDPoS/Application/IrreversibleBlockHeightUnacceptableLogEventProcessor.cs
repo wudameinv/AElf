@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using AElf.CSharp.Core.Extension;
+using Volo.Abp.Threading;
 
 namespace AElf.Kernel.Consensus.AEDPoS.Application
 {
@@ -15,22 +16,7 @@ namespace AElf.Kernel.Consensus.AEDPoS.Application
     {
         private readonly TransactionPackingOptions _transactionPackingOptions;
         private readonly ISmartContractAddressService _smartContractAddressService;
-        private LogEvent _interestedEvent;
-
-        public override LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-                var address =
-                    _smartContractAddressService.GetAddressByContractName(ConsensusSmartContractAddressNameProvider
-                        .Name);
-                _interestedEvent = new IrreversibleBlockHeightUnacceptable().ToLogEvent(address);
-                return _interestedEvent;
-            }
-        }
-
+        
         public ILogger<IrreversibleBlockHeightUnacceptableLogEventProcessor> Logger { get; set; }
 
         public IrreversibleBlockHeightUnacceptableLogEventProcessor(
@@ -41,6 +27,25 @@ namespace AElf.Kernel.Consensus.AEDPoS.Application
             _smartContractAddressService = smartContractAddressService;
 
             Logger = NullLogger<IrreversibleBlockHeightUnacceptableLogEventProcessor>.Instance;
+        }
+        
+        public override InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (InterestedEvent != null)
+                return InterestedEvent;
+            var smartContractAddress = AsyncHelper.RunSync(() => _smartContractAddressService.GetSmartContractAddressAsync(
+                chainContext, ConsensusSmartContractAddressNameProvider.Name));
+            if (smartContractAddress == null) return null;
+            var logEvent = new IrreversibleBlockHeightUnacceptable().ToLogEvent(smartContractAddress.Address);
+            var interestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+            if (!AsyncHelper.RunSync(() => _smartContractAddressService.CheckSmartContractAddressIrreversibleAsync(smartContractAddress)))
+                return interestedEvent;
+            InterestedEvent = interestedEvent;
+            return InterestedEvent;
         }
 
         protected override Task ProcessLogEventAsync(Block block, LogEvent logEvent)

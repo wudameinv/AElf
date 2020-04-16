@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using AElf.Kernel.Blockchain.Application;
 using AElf.TestBase;
 using AElf.Types;
 using Microsoft.Extensions.Options;
@@ -11,11 +12,13 @@ namespace AElf.Kernel.TransactionPool.Infrastructure
     {
         private readonly TransactionExecutionValidationProvider _transactionExecutionValidationProvider;
         private readonly TransactionOptions _transactionOptions;
+        private readonly IBlockchainService _blockchainService;
 
         public TransactionExecutionValidationProviderTests()
         {
             _transactionExecutionValidationProvider = GetRequiredService<TransactionExecutionValidationProvider>();
             _transactionOptions = GetRequiredService<IOptionsMonitor<TransactionOptions>>().CurrentValue;
+            _blockchainService = GetRequiredService<IBlockchainService>();
         }
 
         [Fact]
@@ -25,7 +28,9 @@ namespace AElf.Kernel.TransactionPool.Infrastructure
             transactionMockExecutionHelper.SetTransactionResultStatus(TransactionResultStatus.Mined);
             var kernelTestHelper = GetRequiredService<KernelTestHelper>();
             var transaction = kernelTestHelper.GenerateTransaction();
-            var result = await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction);
+            
+            var result =
+                await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction, await GetChainContextAsync());
             result.ShouldBeTrue();
         }
         
@@ -41,7 +46,7 @@ namespace AElf.Kernel.TransactionPool.Infrastructure
             transactionMockExecutionHelper.SetTransactionResultStatus(status);
             var kernelTestHelper = GetRequiredService<KernelTestHelper>();
             var transaction = kernelTestHelper.GenerateTransaction();
-            var result = await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction);
+            var result = await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction, await GetChainContextAsync());
             result.ShouldBeFalse();
         }
         
@@ -53,8 +58,18 @@ namespace AElf.Kernel.TransactionPool.Infrastructure
             transactionMockExecutionHelper.SetTransactionResultStatus(TransactionResultStatus.Failed);
             var kernelTestHelper = GetRequiredService<KernelTestHelper>();
             var transaction = kernelTestHelper.GenerateTransaction();
-            var result = await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction);
+            var result = await _transactionExecutionValidationProvider.ValidateTransactionAsync(transaction, await GetChainContextAsync());
             result.ShouldBeTrue();
+        }
+
+        private async Task<ChainContext> GetChainContextAsync()
+        {
+            var chain = await _blockchainService.GetChainAsync();
+            return new ChainContext
+            {
+                BlockHash = chain.BestChainHash,
+                BlockHeight = chain.BestChainHeight
+            };
         }
     }
 }

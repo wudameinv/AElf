@@ -3,10 +3,12 @@ using AElf.Kernel.SmartContract.Application;
 using AElf.Types;
 using AElf.Contracts.Configuration;
 using AElf.CSharp.Core.Extension;
+using AElf.Kernel.Blockchain.Application;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Volo.Abp.Threading;
 
 namespace AElf.Kernel.Configuration
 {
@@ -14,33 +16,41 @@ namespace AElf.Kernel.Configuration
     {
         private readonly IBlockTransactionLimitProvider _blockTransactionLimitProvider;
         private readonly ISmartContractAddressService _smartContractAddressService;
-        private LogEvent _interestedEvent;
-
-        public override LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-
-                var address =
-                    _smartContractAddressService.GetAddressByContractName(ConfigurationSmartContractAddressNameProvider
-                        .Name);
-
-                _interestedEvent = new ConfigurationSet().ToLogEvent(address);
-
-                return _interestedEvent;
-            }
-        }
+        private readonly IBlockchainService _blockchainService;
 
         public ILogger<BlockTransactionLimitChangedLogEventProcessor> Logger { get; set; }
 
         public BlockTransactionLimitChangedLogEventProcessor(ISmartContractAddressService smartContractAddressService,
-            IBlockTransactionLimitProvider blockTransactionLimitProvider)
+            IBlockTransactionLimitProvider blockTransactionLimitProvider, IBlockchainService blockchainService)
         {
             _smartContractAddressService = smartContractAddressService;
             _blockTransactionLimitProvider = blockTransactionLimitProvider;
+            _blockchainService = blockchainService;
             Logger = NullLogger<BlockTransactionLimitChangedLogEventProcessor>.Instance;
+        }
+        
+        public override InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (InterestedEvent != null)
+                return InterestedEvent;
+
+            var smartContractAddress = AsyncHelper.RunSync(() => _smartContractAddressService.GetSmartContractAddressAsync(
+                chainContext, ConfigurationSmartContractAddressNameProvider.Name));
+            
+            if (smartContractAddress == null) return null;
+            
+            var logEvent = new ConfigurationSet().ToLogEvent(smartContractAddress.Address);
+            var interestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+            if (!AsyncHelper.RunSync(() => _smartContractAddressService.CheckSmartContractAddressIrreversibleAsync(smartContractAddress)))
+                return interestedEvent;
+            
+            InterestedEvent = interestedEvent;
+
+            return InterestedEvent;
         }
 
         protected override async Task ProcessLogEventAsync(Block block, LogEvent logEvent)

@@ -61,8 +61,11 @@ namespace AElf.CrossChain
             
 
             var smartContractAddress = SampleAddress.AddressList[0];
-            _smartContractAddressService.SetAddress(CrossChainSmartContractAddressNameProvider.Name,
-                smartContractAddress);
+            await _smartContractAddressService.SetSmartContractAddressAsync(new BlockIndex
+            {
+                BlockHash = previousBlockHash,
+                BlockHeight = previousBlockHeight
+            }, CrossChainSmartContractAddressNameProvider.Name, smartContractAddress);
 
             var transactions =
                 await _crossChainIndexingTransactionGenerator.GenerateTransactionsAsync(SampleAddress.AddressList[0],
@@ -87,8 +90,11 @@ namespace AElf.CrossChain
             var previousBlockHeight = 1;
 
             var smartContractAddress = SampleAddress.AddressList[0];
-            _smartContractAddressService.SetAddress(CrossChainSmartContractAddressNameProvider.Name,
-                smartContractAddress);
+            await _smartContractAddressService.SetSmartContractAddressAsync(new BlockIndex
+            {
+                BlockHash = previousBlockHash,
+                BlockHeight = previousBlockHeight
+            }, CrossChainSmartContractAddressNameProvider.Name, smartContractAddress);
         
             var transactions =
                 await _crossChainIndexingTransactionGenerator.GenerateTransactionsAsync(SampleAddress.AddressList[0],

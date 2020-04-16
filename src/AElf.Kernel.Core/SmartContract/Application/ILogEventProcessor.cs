@@ -7,8 +7,14 @@ namespace AElf.Kernel.SmartContract.Application
 {
     public interface ILogEventProcessor
     {
-        LogEvent InterestedEvent { get; }
+        InterestedEvent GetInterestedEvent(IChainContext chainContext);
         Task ProcessAsync(Block block, Dictionary<TransactionResult, List<LogEvent>> logEventsMap);
+    }
+
+    public class InterestedEvent
+    {
+        public LogEvent LogEvent { get; set; }
+        public Bloom Bloom { get; set; }
     }
 
     public interface IBlockAcceptedLogEventProcessor : ILogEventProcessor
@@ -21,7 +27,9 @@ namespace AElf.Kernel.SmartContract.Application
 
     public abstract class LogEventProcessorBase : ILogEventProcessor
     {
-        public abstract LogEvent InterestedEvent { get; }
+        protected InterestedEvent InterestedEvent;
+
+        public abstract InterestedEvent GetInterestedEvent(IChainContext chainContext);
 
         public async Task ProcessAsync(Block block, Dictionary<TransactionResult, List<LogEvent>> logEventsMap)
         {

@@ -15,24 +15,7 @@ namespace AElf.Kernel.SmartContractExecution.Application
         private readonly ISmartContractRegistrationInStateProvider _smartContractRegistrationInStateProvider;
         private readonly ISmartContractExecutiveService _smartContractExecutiveService;
 
-        private LogEvent _interestedEvent;
-
         public ILogger<ContractDeployedLogEventProcessor> Logger { get; set; }
-
-        public override LogEvent InterestedEvent
-        {
-            get
-            {
-                if (_interestedEvent != null)
-                    return _interestedEvent;
-
-                var address = _smartContractAddressService.GetZeroSmartContractAddress();
-
-                _interestedEvent = new ContractDeployed().ToLogEvent(address);
-
-                return _interestedEvent;
-            }
-        }
 
         public ContractDeployedLogEventProcessor(ISmartContractAddressService smartContractAddressService,
             ISmartContractRegistrationProvider smartContractRegistrationProvider,
@@ -46,27 +29,51 @@ namespace AElf.Kernel.SmartContractExecution.Application
 
             Logger = NullLogger<ContractDeployedLogEventProcessor>.Instance;
         }
+        
+        public override InterestedEvent GetInterestedEvent(IChainContext chainContext)
+        {
+            if (InterestedEvent != null)
+                return InterestedEvent;
+
+            var address = _smartContractAddressService.GetZeroSmartContractAddress();
+
+            if (address == null) return null;
+            
+            var logEvent = new ContractDeployed().ToLogEvent(address);
+
+            InterestedEvent = new InterestedEvent
+            {
+                LogEvent = logEvent,
+                Bloom = logEvent.GetBloom()
+            };
+
+            return InterestedEvent;
+        }
 
         protected override async Task ProcessLogEventAsync(Block block, LogEvent logEvent)
         {
             var eventData = new ContractDeployed();
             eventData.MergeFrom(logEvent);
 
-            var smartContractRegistration =
-                await _smartContractRegistrationInStateProvider.GetSmartContractRegistrationAsync(
-                    new ChainContext
-                    {
-                        BlockHash = block.GetHash(),
-                        BlockHeight = block.Height
-                    }, eventData.Address);
-
-            await _smartContractRegistrationProvider.SetSmartContractRegistrationAsync(new BlockIndex
+            var chainContext = new ChainContext
             {
                 BlockHash = block.GetHash(),
                 BlockHeight = block.Height
-            }, eventData.Address, smartContractRegistration);
+            };
+            
+            var smartContractRegistration =
+                await _smartContractRegistrationInStateProvider.GetSmartContractRegistrationAsync(chainContext
+                    , eventData.Address);
+
+            await _smartContractRegistrationProvider.SetSmartContractRegistrationAsync(chainContext, eventData.Address,
+                smartContractRegistration);
             if (block.Height > AElfConstants.GenesisBlockHeight)
                 _smartContractExecutiveService.CleanExecutive(eventData.Address);
+
+            if (eventData.Name != null)
+                await _smartContractAddressService.SetSmartContractAddressAsync(chainContext, eventData.Name,
+                    eventData.Address);
+            
             Logger.LogDebug($"Deployed contract {eventData}");
         }
     }
