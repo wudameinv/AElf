@@ -13,6 +13,7 @@ jobs:
   - script: bash scripts/download_binary.sh
   - script: bash build.sh --target=Build --configuration=Debug
     displayName: 'Build with debug'
+  - script: find ./ -name AElf.Benchmark.dll
   - script: ls -l aelf-node
   # - task: PublishTestResults@2
   #   condition: always()
