@@ -14,6 +14,7 @@ jobs:
   - script: bash build.sh --target=Build --configuration=Release
     displayName: 'Build with debug'
   - script: find ./ -name AElf.Benchmark.dll
+  - script: bash build.sh --target=benchmark --benchmarktest=BlockchainStateMergingTests
   # - task: PublishTestResults@2
   #   condition: always()
   #   inputs:
