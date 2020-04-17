@@ -57,18 +57,7 @@ Task("benchmark")
     .Description("benchmark")
     .Does(() =>
 { 
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter BlockchainStateMergingTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter BlockExecutingParalleGroupslTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter BlockExecutingParallelTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter BlockExecutingTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter Fibonacci16Tests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter LoopDivAdd10MTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter LoopExpNop1MTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter MinerTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter MiningTxHubBenchmark");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter TransactionVerifySignatureTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter TxHubHandleBestChainFoundTests");
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter TxHubTransactionsReceiveTests");
+  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter {benchmarktest}");
 });
 
 Task("Build-Release")
