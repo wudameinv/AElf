@@ -57,7 +57,7 @@ Task("benchmark")
     .Description("benchmark")
     .Does(() =>
 { 
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter benchmarktest");
+  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter $benchmarktest");
 });
 
 Task("Build-Release")
