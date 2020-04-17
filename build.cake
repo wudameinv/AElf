@@ -2,6 +2,7 @@
 #addin nuget:?package=Cake.Codecov
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Debug");
+var benchmarktest=  Argument("benchmarktest", "BlockchainStateMergingTests");
 var rootPath     = "./";
 var srcPath      = rootPath + "src/";
 var contractPath = rootPath + "contract/";
@@ -52,6 +53,19 @@ Task("Build")
      
     DotNetCoreBuild(solution, buildSetting);
 });
+Task("benchmark")
+    .Description("benchmark")
+    .Does(() =>
+{   var executesetting = new DotNetCoreExecuteSettings{
+        Configuration = configuration,
+        NoRestore = true,
+        NoBuild = true,
+   ArgumentCustomization = args => {   
+       return args.Append("--filter benchmarktest")
+   }
+  };
+  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", executesetting)
+}
 Task("Build-Release")
     .Description("Compilation project")
     .IsDependentOn("Clean")
