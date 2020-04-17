@@ -62,7 +62,7 @@ Task("benchmark")
         NoBuild = true,
    ArgumentCustomization = args => {   
        return args.Append("--filter benchmarktest");}
-  ;}
+  };
   DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", executesetting);
 });
 
