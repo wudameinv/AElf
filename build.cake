@@ -56,11 +56,8 @@ Task("Build")
 Task("benchmark")
     .Description("benchmark")
     .Does(() =>
-{   var executesetting = new DotNetCoreExecuteSettings{
-   ArgumentCustomization = args => {   
-       return args.Append("--filter BlockchainStateMergingTests");}
-  };
-  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", executesetting);
+{  
+  DotNetCoreExecute("./bench/AElf.Benchmark/bin/Release/netcoreapp3.1/AElf.Benchmark.dll", "--filter BlockchainStateMergingTests");
 });
 
 Task("Build-Release")
