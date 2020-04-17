@@ -14,7 +14,10 @@ jobs:
   - script: bash build.sh --target=Build --configuration=Release
     displayName: 'Build with debug'
   - script: find ./ -name AElf.Benchmark.dll
-  - script: bash build.sh --target=benchmark --benchmarktest=BlockchainStateMergingTests
+  # - script: bash build.sh --target=benchmark --benchmarktest=BlockchainStateMergingTests
+  #   displayName: 'BlockchainStateMergingTests'
+  - script: bash build.sh --target=benchmark --benchmarktest=BlockExecutingParalleGroupslTests
+    displayName: 'BlockExecutingParalleGroupslTests'
   # - task: PublishTestResults@2
   #   condition: always()
   #   inputs:
