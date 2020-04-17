@@ -57,9 +57,6 @@ Task("benchmark")
     .Description("benchmark")
     .Does(() =>
 {   var executesetting = new DotNetCoreExecuteSettings{
-        Configuration = configuration,
-        NoRestore = true,
-        NoBuild = true,
    ArgumentCustomization = args => {   
        return args.Append("--filter benchmarktest");}
   };
