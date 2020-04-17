@@ -47,8 +47,7 @@ Task("Build")
         ArgumentCustomization = args => {
             return args.Append("/clp:ErrorsOnly")
                        .Append("/p:GeneratePackageOnBuild=false")
-                       .Append("-v quiet")
-                       .Append("-o aelf-node");}
+                       .Append("-v quiet");}
     };
      
     DotNetCoreBuild(solution, buildSetting);
